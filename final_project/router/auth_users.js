@@ -5,25 +5,107 @@ const regd_users = express.Router();
 
 let users = [];
 
-const isValid = (username)=>{ //returns boolean
-//write code to check is the username is valid
-}
+const isValid = (username) => {
+    // Check if the username exists in the users array
+    return users.some((user) => user.username === username);
+  };
 
-const authenticatedUser = (username,password)=>{ //returns boolean
-//write code to check if username and password match the one we have in records.
-}
+const authenticateUser = (username, password) => {
+    // Check if the username and password match the records
+    return users.some((user) => user.username === username && user.password === password);
+  };
 
-//only registered users can login
-regd_users.post("/login", (req,res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
-});
+// Only registered users can login
+regd_users.post("/login", (req, res) => {
+    const { username, password } = req.body;
+  
+    // Check if the username and password are provided
+    if (!username || !password) {
+      return res.status(400).json({ message: "Username and password are required" });
+    }
+  
+    // Check if the username and password match
+    if (authenticateUser(username, password)) {
+
+      // Set the username in req.user
+      req.user = { username: username };
+      // Generate a JWT token
+      const token = jwt.sign({ username }, "access");
+
+      // Set the authorization information in the session
+      req.session.authorization = {
+        accessToken: token
+      };
+      return res.status(200).json({ message: "Login successful" , token});
+    }
+  
+    return res.status(401).json({ message: "Invalid username or password" });
+  });
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+    const isbn = req.params.isbn;
+    const review = req.query.review;
+    const username = req.user.username; // Assuming the username is stored in the req.user object after authentication
+  
+    if (!review) {
+      return res.status(400).json({ message: "Review content is required" });
+    }
+  
+    if (!books.hasOwnProperty(isbn)) {
+      return res.status(404).json({ message: "Book not found" });
+    }
+  
+    if (!books[isbn].reviews) {
+      books[isbn].reviews = [];
+    }
+  
+    const existingReviewIndex = books[isbn].reviews.findIndex((r) => r.username === username);
+  
+    if (existingReviewIndex > -1) {
+      // Modify existing review
+      books[isbn].reviews[existingReviewIndex].review = review;
+      return res.status(200).json({ message: "Review modified successfully" });
+    } else {
+      // Add new review
+      const newReview = {
+        username: username,
+        review: review,
+      };
+      books[isbn].reviews.push(newReview);
+      return res.status(200).json({ message: "Review added successfully" });
+    }
+  });
+
+
+  // Delete a book review
+  regd_users.delete("/auth/review/:isbn", (req, res) => {
+    const isbn = req.params.isbn;
+    const username = req.user.username; // Assuming the username is stored in the req.user object after authentication
+
+    if (!books.hasOwnProperty(isbn)) {
+        return res.status(404).json({ message: "Book not found" });
+    }
+
+    if (!books[isbn].reviews || books[isbn].reviews.length === 0) {
+        return res.status(404).json({ message: "No reviews found for this book" });
+    }
+
+    const filteredReviews = books[isbn].reviews.filter((review) => review.username === username);
+
+    if (filteredReviews.length === 0) {
+        return res.status(404).json({ message: "No reviews found for the logged-in user" });
+    }
+
+    // Remove the filtered reviews
+    filteredReviews.forEach((review) => {
+        const reviewIndex = books[isbn].reviews.indexOf(review);
+        books[isbn].reviews.splice(reviewIndex, 1);
+    });
+
+    return res.status(200).json({ message: "Reviews deleted successfully" });
 });
+
 
 module.exports.authenticated = regd_users;
 module.exports.isValid = isValid;
