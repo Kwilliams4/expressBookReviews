@@ -54,27 +54,20 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
     const review = req.query.review;
     const username = req.user.username; // Assuming the username is stored in the req.user object after authentication
   
-   if (!review) {
-      return res.status(400).json({ message: "Review content is required" });
-    }
-
   var booksObj = Object.keys(books);
   var book;
-  for(var i = 1; i <= booksObj.length; i++){    
+
+  for(var i = 1; i <= booksObj.length; i++){  
     if (books[i].isbn == isbn) {
         book = books[i];
       break;
     }
-  }
-    /*Object.keys(books).forEach((key) => {
-         book = books[key];
-        if (book.isbn == isbn) {
-          match=true;
-          break;
-        }
-      });*/
-      if(!book){
-          return res.status(400).json({ message: "No Book Found!" });
+}
+    if(!book) {
+        return res.status(400).json({ message: "No Book Found!" });
+         }
+    if (!review) {
+        return res.status(400).json({ message: "Review content is required" });
       }
 
     if (!book.reviews) {
@@ -85,23 +78,18 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
         review: review,
       };
       book.reviews.push(newReview);
-    }
-  
-    const existingReviewIndex = book.reviews.findIndex((r) => r.username === username);
-  
-    if (existingReviewIndex > -1) {
-      // Modify existing review
-      book.reviews[existingReviewIndex].content = review;
-      return res.status(200).json({ message: "Review modified successfully" });
-    } else {
-      // Add new review
-      const newReview = {
-        username: username,
-        review: review,
-      };
-      book.reviews.push(newReview);
       return res.status(200).json({ message: "Review added successfully" });
     }
+  else{
+
+    const existingReviewIndex = {
+        username: username,
+        review: review,
+      }; 
+
+      book.reviews[existingReviewIndex].content = review;
+      return res.status(200).json({ message: "Review modified successfully" });
+    } 
   });
 
 

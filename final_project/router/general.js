@@ -133,14 +133,32 @@ public_users.get('/title/:titulo',function (req, res) {     //(ruta)/:(path-para
 //  Get book review
 public_users.get('/review/:isbn',function (req, res) {
     const isbn = req.params.isbn;
+    const matchingreview = [];
+  
+    const getMatchingreview = new Promise((resolve, reject) => {
+     
+      Object.keys(books).forEach((key) => {
+        const book = books[key];
+        if (book.isbn == isbn) {
+          matchingreview.push(book);
+        }
+      });
+  
+      if (matchingreview.length > 0) {
+        resolve(matchingreview);
+      } else {
+        reject({ message: "No books found for the author" });
+      }
+    });
+  
+    getMatchingreview
+      .then((books) => {
+        res.send(books);
+      })
+      .catch((error) => {
+        res.status(404).json(error);
+      });
+  });
 
-    if (books.hasOwnProperty(isbn)) {
-      const book = books[isbn];
-      const reviews = book.reviews;
-      res.send(reviews);
-    } else {
-      res.status(404).json({ message: "Book not found" });
-    }
-});
 
 module.exports.general = public_users;
