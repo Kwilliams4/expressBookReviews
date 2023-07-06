@@ -15,9 +15,15 @@ const authenticateUser = (username, password) => {
     return users.some((user) => user.username === username && user.password === password);
   };
 
+  regd_users.get("/users", function (req, res) {
+    //Write your code here
+    return res.send(JSON.stringify({"Lolo":"dori"}));
+  });
+
 // Only registered users can login
 regd_users.post("/login", (req, res) => {
-    const { username, password } = req.body;
+    const username = req.body.username;
+    const password = req.body.password;
   
     // Check if the username and password are provided
     if (!username || !password) {
@@ -48,23 +54,44 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
     const review = req.query.review;
     const username = req.user.username; // Assuming the username is stored in the req.user object after authentication
   
-    if (!review) {
+   if (!review) {
       return res.status(400).json({ message: "Review content is required" });
     }
-  
-    if (!books.hasOwnProperty(isbn)) {
-      return res.status(404).json({ message: "Book not found" });
+
+  var booksObj = Object.keys(books);
+  var book;
+  for(var i = 1; i <= booksObj.length; i++){    
+    if (books[i].isbn == isbn) {
+        book = books[i];
+      break;
+    }
+  }
+    /*Object.keys(books).forEach((key) => {
+         book = books[key];
+        if (book.isbn == isbn) {
+          match=true;
+          break;
+        }
+      });*/
+      if(!book){
+          return res.status(400).json({ message: "No Book Found!" });
+      }
+
+    if (!book.reviews) {
+      book.reviews = [];
+      // Add new review
+      const newReview = {
+        username: username,
+        review: review,
+      };
+      book.reviews.push(newReview);
     }
   
-    if (!books[isbn].reviews) {
-      books[isbn].reviews = [];
-    }
-  
-    const existingReviewIndex = books[isbn].reviews.findIndex((r) => r.username === username);
+    const existingReviewIndex = book.reviews.findIndex((r) => r.username === username);
   
     if (existingReviewIndex > -1) {
       // Modify existing review
-      books[isbn].reviews[existingReviewIndex].review = review;
+      book.reviews[existingReviewIndex].content = review;
       return res.status(200).json({ message: "Review modified successfully" });
     } else {
       // Add new review
@@ -72,7 +99,7 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
         username: username,
         review: review,
       };
-      books[isbn].reviews.push(newReview);
+      book.reviews.push(newReview);
       return res.status(200).json({ message: "Review added successfully" });
     }
   });

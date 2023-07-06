@@ -8,6 +8,7 @@ const public_users = express.Router();
 public_users.post("/register", (req,res) => {
     const username = req.body.username;
     const password = req.body.password;
+
   
     if (!username || !password) {
       return res.status(400).json({ message: "Username and password are required" });
@@ -17,7 +18,17 @@ public_users.post("/register", (req,res) => {
       return res.status(409).json({ message: "Username already exists" });
     }
   
-    registerUser(username, password);
+    //registerUser(username, password);
+    const authenticatedUser = {
+       "username": username,
+        "password": password
+        // Additional user properties
+      };
+    
+      // Attach the authenticated user to req.user
+      users.push(authenticatedUser);
+    
+    
   
     return res.status(200).json({ message: "User registered successfully" });
   });
@@ -29,26 +40,36 @@ public_users.get('/',function (req, res) {
   return res.send(JSON.stringify(books,null,4));
 });
 
-// Get book details based on ISBN
-public_users.get('/isbn/:isbn',function (req, res) {
-    const isbn = req.params.isbn;
+// Get books by ISBN
+  public_users.get('/isbn/:ISBN',function (req, res) {
+    const isbn = req.params.ISBN;
+    const matchingBooks = [];
   
-    const getBookDetails = new Promise((resolve, reject) => {
-      if (books.hasOwnProperty(isbn)) {
-        resolve(books[isbn]);
+    const getMatchingBooks = new Promise((resolve, reject) => {
+     
+      Object.keys(books).forEach((key) => {
+        const book = books[key];
+        if (book.isbn == isbn) {
+          matchingBooks.push(book);
+        }
+      });
+  
+      if (matchingBooks.length > 0) {
+        resolve(matchingBooks);
       } else {
-        reject({ message: "Book not found" });
+        reject({ message: "No books found for the author" });
       }
     });
   
-    getBookDetails
-      .then((bookDetails) => {
-        res.send(bookDetails);
+    getMatchingBooks
+      .then((books) => {
+        res.send(books);
       })
       .catch((error) => {
         res.status(404).json(error);
       });
   });
+
   
 // Get book details based on author
 public_users.get('/author/:author',function (req, res) {
@@ -81,16 +102,16 @@ public_users.get('/author/:author',function (req, res) {
   });
 
 // Get all books based on title
-public_users.get('/title/:title',function (req, res) {
-    const title = req.params.title;
+public_users.get('/title/:titulo',function (req, res) {     //(ruta)/:(path-parameter)
+    const title = req.params.titulo;
     const matchingBooks = [];
   
-    const getMatchingBooks = new Promise((resolve, reject) => {
+    const getMatchingBooks = new Promise((resolve, reject) => {     //Promise method
       // Iterate through the books and check for matching title
-      Object.keys(books).forEach((key) => {
-        const book = books[key];
+      Object.keys(books).forEach((key) => {     // transforms to an array
+        const book = books[key];            // book is an elment [] of books
         if (book.title === title) {
-          matchingBooks.push(book);
+          matchingBooks.push(book);           // push title to array
         }
       });
   
@@ -101,12 +122,12 @@ public_users.get('/title/:title',function (req, res) {
       }
     });
   
-    getMatchingBooks
+    getMatchingBooks            // Function call 
       .then((books) => {
-        res.send(books);
+        res.send(books);            // resolve (books) is reference to the value pushed
       })
       .catch((error) => {
-        res.status(404).json(error);
+        res.status(404).json(error);           // reject (error) is reference to message
       });
   });
 //  Get book review
