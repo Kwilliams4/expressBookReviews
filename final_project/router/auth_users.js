@@ -66,10 +66,9 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
     if(!book) {
         return res.status(400).json({ message: "No Book Found!" });
          }
-    if (!review) {
-        return res.status(400).json({ message: "Review content is required" });
-      }
 
+         const userReviews = book.reviews.filter((review) => review.username === username); // HASTA AQUI FUNCIONA
+    
     if (!book.reviews) {
       book.reviews = [];
       // Add new review
@@ -80,24 +79,33 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
       book.reviews.push(newReview);
       return res.status(200).json({ message: "Review added successfully" });
     }
+
   else{
-    const newReview = {
-        username: username,
-        review: review
-      }; 
+      if(!userReviews){
+          
+         // Add new review
+        const newReview = {
+          username: username,
+          review: review,
+        };
+        book.reviews.push(newReview);
+        return res.status(200).json({ message: "Review added successfully" });
+      }
 
-    var numberOfExistingReviews=book.reviews.length;
-    book.reviews[numberOfExistingReviews]=newReview;
+      else{
+            var numberOfExistingReviews=book.reviews.length;
 
- const userReviews = book.reviews.filter((review) => review.username === username); // HASTA AQUI FUNCIONA
-    
- /*userReviews.forEach((review) => {
-        const reviewIndex = book.reviews.indexOf(review);
-        book.reviews.splice(reviewIndex, 1);
-    });*/
+             const newReview = {
+                 username: username,
+                 review: review
+                }; 
 
+        book.reviews[numberOfExistingReviews-1]=newReview;      //array
+        book.review[userReviews] = newReview.review;
+        
      return res.status(200).json({ message: "Review modified successfully" });
     } 
+}
   });
 
 
